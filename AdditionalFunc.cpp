@@ -91,7 +91,7 @@ MenuItemImage* CreateButton(const Vec2& pos, const Size& size, const char* picna
 	const char* picname2, const char* picname3)
 {
 	MenuItemImage* buttonImage = MenuItemImage::create(picname1, picname2, picname3);
-	if (buttonImage == nullptr)
+	if (buttonImage == nullptr || buttonImage->getContentSize().width <= 0)
 	{
 		throw LoadFailure(picname1, "button");
 	}

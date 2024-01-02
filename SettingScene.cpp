@@ -44,14 +44,18 @@ bool SettingScene::init()
 	// 音乐开关
 	MenuItemImage* MusicImage = CreateButton(Vec2(ButtonPosX, ButtonPosY), ButtonSize);
 	ButtonList.pushBack(MusicImage);
-	Label* MusicButtonText = CreateLabel("关闭", ButtonTextFont, Vec2(ButtonPosX, ButtonPosY), ButtonTextSize, ButtonTextColor);
+	Label* MusicButtonText = CreateLabel("打开", ButtonTextFont, Vec2(ButtonPosX, ButtonPosY), ButtonTextSize, ButtonTextColor);
 	this->addChild(MusicButtonText, 2);
 	ButtonTextList.pushBack(MusicButtonText);
 	Label* MusicText = CreateLabel("背景音乐：", SettingInfoFont, Vec2::ZERO, SettingInfoSize, SettingInfoColor);
 	MusicText->setPosition(Vec2(TextPosX + MusicText->getContentSize().width / 2, ButtonPosY));
 	this->addChild(MusicText);
 	MusicImage->setCallback(CC_CALLBACK_1(SettingScene::MusicButtonCallBack, this));
-	MusicImage->selected();
+	if (SimpleAudioEngine::getInstance()->isBackgroundMusicPlaying())
+	{
+		MusicImage->selected();
+		SetLabelText(MusicButtonText, "关闭");
+	}
 
 	/* 在此处添加设置按钮 */
 	//ui::Slider* slider = ui::Slider::create();

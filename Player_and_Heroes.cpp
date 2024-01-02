@@ -1,6 +1,7 @@
 #include"Player_and_Heroes.h"
 #include"GameScene.h"
 #include "HeroHandler.h"
+#include "Store.h"
 
 USING_NS_CC;
 using namespace std;
@@ -135,12 +136,19 @@ void myHero::init_with_hero(Hero* hero, int camp, GameScene* pointer)
 	Size BarSize = Size(1.0f / getScaleX() * OnBoardSize.width, 1.0f / getScaleY() * BarHeight);
 	//HPBar = CreateLoadingBar("HPBar.png", Vec2(OnBoardSize.width / 2, BarHeight / 2 + OnBoardSize.height),
 	//	Size(visibleSize.width, BarHeight), 100);
-	HPBar = CreateLoadingBar("HPBar.png", BarPos, BarSize, 100);
+	if(Camp)
+	{
+		HPBar = CreateLoadingBar("EnemyHPBar.png", BarPos, BarSize, 100);
+	}
+	else
+	{
+		HPBar = CreateLoadingBar("MyHPBar.png", BarPos, BarSize, 100);
+	}
 	this->addChild(HPBar);
 	BarPos.y += 1.0f / getScaleY() * BarHeight;
 	//MPBar = CreateLoadingBar("MPBar.png", Vec2(OnBoardSize.width / 2, -3 * OnBoardSize.height / 2),
 	//	Size(OnBoardSize.width, BarHeight), 100);
-	MPBar = CreateLoadingBar("MPBar.png", BarPos, BarSize, 100);
+	MPBar = CreateLoadingBar("MPBar.png", BarPos, BarSize);
 	this->addChild(MPBar);
 }
 
@@ -176,7 +184,9 @@ bool myHero::get_condition()
 void myHero::hero_init()
 {
 	HP = HPmax;    //回满血
-	MP = MPmax;    //回满能量
+	HPBar->setPercent(100.0f * HP / HPmax);
+	MP = 0;        //回满能量
+	MPBar->setPercent(100.0f * MP / MPmax);
 	condition = 1; //标记为存活
 	target_hero = NULL;  //不锁定敌方
 	setPosition(scene_pointer->hh->GetBoardPos(hero_x, hero_y) - Vec2(0, BarHeight));
@@ -195,7 +205,7 @@ void myHero::attack()
 	if (MP == MPmax) {
 		damage *= 2;
 		MP = 0;
-		MPBar->setPercent((float)MP / (float)MPmax);
+		MPBar->setPercent(100.0f * MP / MPmax);
 	}
 	if (damage < 50) damage = 50; //保底伤害
 	if (target_hero->HP <= damage) {  //造成超过血量的伤害，角色死亡
@@ -206,16 +216,15 @@ void myHero::attack()
 		target_hero->HP -= damage;
 
 	MP += 5;
-	MPBar->setPercent((float)MP / (float)MPmax);
+	MPBar->setPercent(100.0f * MP / MPmax);
 	target_hero->attacked();
 }
 //英雄被攻击
 void myHero::attacked()
 {
-	float percent = (float)HP / (float)HPmax;
-	HPBar->setPercent(percent);
-	auto tintTo = TintTo::create(0.1f, 255.0f, 0.0f, 0.0f);
-	auto tintBack = TintTo::create(0.1f, 255.0f, 255.0f, 255.0f);
+	HPBar->setPercent(100.0f * HP / HPmax);
+	auto tintTo = TintTo::create(0.05f, 255, 0, 0);
+	auto tintBack = TintTo::create(0.05f, 255, 255, 255);
 	auto seq = Sequence::create(tintTo, tintBack, nullptr);
 	runAction(seq);
 }
@@ -227,7 +236,7 @@ void myHero::heal()
 	if (MP == MPmax) {  //角色释放技能
 		therapeutic_dose *= 2;
 		MP = 0;
-		MPBar->setPercent((float)MP / (float)MPmax);
+		MPBar->setPercent(100.0f * MP / MPmax);
 	}
 	if (target_hero->HP + therapeutic_dose >= target_hero->HPmax) {
 		target_hero->HP = target_hero->HPmax;
@@ -235,17 +244,16 @@ void myHero::heal()
 	else
 		target_hero->HP += therapeutic_dose;
 	MP += 5;
-	MPBar->setPercent((float)MP / (float)MPmax);
+	MPBar->setPercent(100.0f * MP / MPmax);
 	target_hero->healed();
 }
 
 //英雄被治疗
 void myHero::healed()
 {
-	float percent = (float)HP / (float)HPmax;
-	HPBar->setPercent(percent);
-	auto tintTo = TintTo::create(0.1f, 0.0f, 255.0f, 0.0f);
-	auto tintBack = TintTo::create(0.1f, 255.0f, 255.0f, 255.0f);
+	HPBar->setPercent(100.0f * HP / HPmax);
+	auto tintTo = TintTo::create(0.05f, 0, 255, 0);
+	auto tintBack = TintTo::create(0.05f, 255, 255, 255);
 	auto seq = Sequence::create(tintTo, tintBack, nullptr);
 	runAction(seq);
 }
@@ -253,10 +261,18 @@ void myHero::healed()
 //英雄死亡
 void myHero::dead()
 {
-	auto fadeOut = FadeOut::create(2.0f);
+	if (Camp)
+	{
+		scene_pointer->st->CoinUpdate(Price);
+	}
+	auto fadeOut = FadeOut::create(1.0f);
 	runAction(fadeOut);
 }
 
+//角色设置为不可见
+void myHero::remove(float dlt) {
+	this->setVisible(false);
+}
 
 void myHero::start_battle()
 {
@@ -268,6 +284,11 @@ void myHero::start_battle()
 void myHero::end_battle()
 {
 	if (get_condition())
-		unschedule(CC_SCHEDULE_SELECTOR(myHero::moveAction));
-	hero_init();
+	{
+		if(isScheduled(CC_SCHEDULE_SELECTOR(myHero::moveAction)))
+		{
+			unschedule(CC_SCHEDULE_SELECTOR(myHero::moveAction));
+		}
+		hero_init();
+	}
 }

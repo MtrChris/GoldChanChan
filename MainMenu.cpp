@@ -37,6 +37,7 @@ Scene* MainMenu::createScene()
 // on "init" you need to initialize your instance
 bool MainMenu::init()
 {
+    TEST_INIT
     //////////////////////////////
     // 1. super init first
     if (!Scene::init())
@@ -64,6 +65,7 @@ bool MainMenu::init()
     // 创建开始按钮、设置按钮和退出按钮
     float CenterX = origin.x + visibleSize.width / 2;
     float CenterY = origin.y + visibleSize.height / 2;
+
     MenuItemImage* startImage = CreateButton(Vec2(CenterX, CenterY), ButtonSize);
     MenuItemImage* settingImage = CreateButton(Vec2(CenterX, CenterY - ButtonGap), ButtonSize);
     MenuItemImage* quitImage = CreateButton(Vec2(CenterX, CenterY - 2 * ButtonGap), ButtonSize);
@@ -86,7 +88,7 @@ bool MainMenu::init()
     menu->setName("MenuButton");
     this->addChild(menu, 0);
     SetButtonState(true);
-
+    CATCH_INIT
     return true;
 }
 

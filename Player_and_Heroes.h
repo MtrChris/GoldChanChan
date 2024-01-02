@@ -59,9 +59,9 @@ protected:
 	int level;                         //英雄等级
 	int condition;                     //英雄状态（1为存活，0为死亡）
 	int Camp;                          //英雄阵营（1为我方，0为敌方）
-	const float moveSpeed = 100.0f;    //英雄移动速度
-	const float moveInterval = 0.2f;   //英雄移动间隔
-	const float attackInterval = 0.3f; //角色攻击间隔
+	const float moveSpeed = 50.0f;     //英雄移动速度
+	const float moveInterval = 0.3f;   //英雄移动间隔
+	const float attackInterval = 0.5f; //角色攻击间隔
 	int hero_x = 0;                    //英雄在场上的初始横坐标
 	int hero_y = 0;                    //英雄在场上的初始纵坐标
 	GameScene* scene_pointer = NULL;   //指向场景的指针
@@ -83,14 +83,16 @@ public:
 	void init_with_hero(Hero* hero, int m_camp, GameScene* pointer);              //初始化我的英雄
 
 	//英雄属性相关函数
-	void level_up();                          //英雄升级
-	const int getLevel();                     //获取英雄等级
-	bool get_condition();                     //获取英雄状态
-	void hero_init();                         //一局结束后英雄状态刷新
+	void level_up();                        //英雄升级
+	const int getLevel();                   //获取英雄等级
+	bool get_condition();                   //获取英雄状态
+	void hero_init();                       //一局结束后英雄状态刷新
+	void remove(float dlt);
 
 	//英雄放置相关函数
-	void move_to_board(int x, int y);          //英雄移动到场上
-	void remove_from_board();                  //英雄从场上移除
+	void move_to_board(int x, int y);       //英雄移动到场上
+	void remove_from_board();     //英雄从场上移除
+	void erase_hero();
 	myHero* findNearestTarget(Player* player);
 	myHero* myHero::findHurtTarget(Player* player);
 
@@ -98,10 +100,10 @@ public:
 	void start_battle();
 	void end_battle();
 	void change_target(myHero* hero);       //切换锁定目标
-	void moveAction(float dt);              //角色移动
+	void moveAction(float dt);              //英雄移动
 	void relativeMove(float x, float y);    //相对英雄坐标移动
 	void absoluteMove(float x, float y);    //绝对坐标移动
-	void hero_action();                     //英雄一轮锁定移动+攻击
+	void hero_action();                     //英雄一次战斗行动
 	void attack();                          //英雄攻击
 	void attacked();                        //角色被攻击
 	void heal();                            //英雄治疗
@@ -135,13 +137,15 @@ public:
 	cocos2d::Vector<myHero*> HeroesOnBoard;
 	static Player* NormalCreate(GameScene* m_gscene, std::string name, std::string picname, int hp);
 	void NormalInit(GameScene* m_gscene, std::string name, std::string picname, int hp);
-	bool get_condition();
+	bool lose();
 	void get_attack(int leftHeroes);
-	void Player::AIAction();
+	void AIAction();
+	void JudgeStageEnd(float dt);
+	void StageEnd(float dt);
 
 	CREATE_FUNC(Player)
 
-	const cocos2d::Vec2 PlayerPos = cocos2d::Vec2(10, 10);
+		const cocos2d::Vec2 PlayerPos = cocos2d::Vec2(10, 10);
 	const cocos2d::Size PlayerSize = cocos2d::Size(40, 40);
 	const float BarHeight = 5;
 };

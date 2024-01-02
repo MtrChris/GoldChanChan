@@ -68,9 +68,14 @@ void StageController::NextStage()
 		{
 			(*it)->start_battle();
 		}
+		gscene->me->schedule(CC_SCHEDULE_SELECTOR(Player::JudgeStageEnd));
 	}
 	else if (CurStage == FIGHT || CurStage == CREEP)
 	{
+		if(gscene->me->isScheduled(CC_SCHEDULE_SELECTOR(Player::JudgeStageEnd)))
+		{
+			gscene->me->unschedule(CC_SCHEDULE_SELECTOR(Player::JudgeStageEnd));
+		}
 		if(CurStage == FIGHT)
 		{
 			StartNewRound();
@@ -89,19 +94,41 @@ void StageController::NextStage()
 		{
 			(*it)->end_battle();
 		}
-		gscene->me->get_attack(gscene->enemy->HeroesOnBoard.size());
-		gscene->enemy->get_attack(gscene->me->HeroesOnBoard.size());
-		if (!gscene->me->get_condition())
+		for (int row = 0; row < gscene->hh->FullRow; row++)
+		{
+			for (int col = 0; col < gscene->hh->BoardCol; col++)
+			{
+				myHero* CurHero = gscene->hh->Board[row][col];
+				if (CurHero != nullptr && !CurHero->isVisible())
+				{
+					CurHero->erase_hero();
+				}
+			}
+		}
+		int myHeroLeft = gscene->me->HeroesOnBoard.size();
+		int EnemyHeroLeft = gscene->enemy->HeroesOnBoard.size();
+		if (myHeroLeft > EnemyHeroLeft)
+		{
+			gscene->enemy->get_attack(myHeroLeft - EnemyHeroLeft);
+		}
+		else if(myHeroLeft < EnemyHeroLeft)
+		{
+			gscene->me->get_attack(EnemyHeroLeft - myHeroLeft);
+		}
+		if (gscene->me->lose())
 		{
 			unscheduleAllCallbacks();
 			gscene->DisplayResult(false);
 		}
-		else if (!gscene->enemy->get_condition())
+		else if (gscene->enemy->lose())
 		{
 			unscheduleAllCallbacks();
 			gscene->DisplayResult(true);
 		}
-		gscene->enemy->AIAction();
+		if(gscene->sv == nullptr)
+		{
+			gscene->enemy->AIAction();
+		}
 	}
 	else
 	{
@@ -131,6 +158,7 @@ void StageController::UpdateTimer(float dt)
 
 void StageController::StartNewRound()
 {
+	Round++;
 	if (gscene->st->NextRefresh)
 	{
 		gscene->st->ShuffleItem();
@@ -153,4 +181,14 @@ void StageController::StartNewRound()
 const int StageController::getStage()
 {
 	return CurStage;
+}
+
+const int StageController::getCurTime()
+{
+	return CurTime;
+}
+
+const int StageController::getRound()
+{
+	return Round;
 }

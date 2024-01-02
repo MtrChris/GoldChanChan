@@ -5,6 +5,7 @@
 
 #include "GoldChan.h"
 #include "Player_and_Heroes.h"
+#include "Sever.h"
 
 class Store;
 class StageController;
@@ -24,6 +25,7 @@ private:
 	HeroHandler* hh;
 	Player* me;
 	Player* enemy;
+	Sever* sv;
 	bool isQuitBoxOpen;
 
 	cocos2d::Vector<cocos2d::MenuItemImage*> ButtonList;
@@ -31,9 +33,12 @@ private:
 	cocos2d::MenuItemImage* StoreButton; // 商店按钮
 	cocos2d::Label* CoinNum;   // 显示持有金币数的文本
 	void SetButtonState(const bool state);
+	void initSever();
+	void SeverConnect(float dt);
+	void SeverMsgRead(float dt);
 
 public:
-	static cocos2d::Scene* CreateScene();
+	static cocos2d::Scene* CreateScene(bool multi = false);
 	virtual bool init(); 
 	CREATE_FUNC(GameScene)
 
@@ -55,10 +60,11 @@ public:
 	const float ButtonTextSize = 8; // 按钮上文字的大小
 	const cocos2d::Color3B ButtonTextColor = cocos2d::Color3B::BLACK; // 按钮文字的颜色
 	const char* TextFont = "宋体";
-	const cocos2d::Size QuitBoxSize = cocos2d::Size(300, 150);        // 退出弹窗的大小
-	const cocos2d::Size QuitButtonSize = cocos2d::Size(100, 40);      // 退出确认按钮的大小
-	const float QuitTextSize = 15;                                    // 按钮文字的大小
-	const float QuitMessageSize = 20;                                 // 退出提示信息的大小
+	const cocos2d::Size QuitBoxSize = cocos2d::Size(220, 80);        // 退出弹窗的大小
+	const cocos2d::Size QuitButtonSize = cocos2d::Size(50, 20);       // 退出确认按钮的大小
+	const float QuitTextSize = 10;                                    // 按钮文字的大小
+	const float QuitMessageSize = 15;                                 // 退出提示信息的大小
+	const float QuitMessageY = 20;                                    // 退出信息的位置
 	const cocos2d::Size CoinBgSize = cocos2d::Size(50, 15);           // 显示金币数量背景的大小
 	const cocos2d::Vec2 CoinBgPos = cocos2d::Vec2(10, 10);            // 显示金币数量背景的位置（相对于左上角）
 	const float CoinImgX = 10; // 金币图像相对于边缘的位置

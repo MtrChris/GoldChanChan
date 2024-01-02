@@ -111,21 +111,14 @@ bool AppDelegate::applicationDidFinishLaunching() {
 
     register_all_packages();
 
-    try
-    {
-        srand((unsigned int)time(0));
-        // create a scene. it's an autorelease object
+    srand((unsigned int)time(0));
+    SimpleAudioEngine::getInstance()->playBackgroundMusic("BgMusic.mp3", true);
+    // create a scene. it's an autorelease object
 
-        auto scene = MainMenu::createScene();
-        SimpleAudioEngine::getInstance()->playBackgroundMusic("BgMusic.mp3", true);
-        // run
-        director->runWithScene(scene);
-    }
-    catch (LoadFailure lf)
-    {
-        log(lf.what());
-        director->end();
-    }
+    auto scene = MainMenu::createScene();
+    // run
+    director->runWithScene(scene);
+
     return true;
 }
 

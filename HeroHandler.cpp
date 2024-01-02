@@ -39,7 +39,7 @@ void HeroHandler::initLibrary()
 	HeroLibrary[4] = Hero::create_with_attribute(4, "·ûÐþ", "ÖØ×°", 1500, 50, 150, 130, 35, 2, "Fu.png");
 	HeroLibrary[5] = Hero::create_with_attribute(5, "ÅúÁ³³Â", "ÉäÊÖ", 500, 100, 300, 100, 100, 2, "Chen.png");
 	HeroLibrary[6] = Hero::create_with_attribute(6, "¸ÊÓê", "ÉäÊÖ", 500, 100, 500, 0, 100, 5, "Ganyu.png");
-	HeroLibrary[7] = Hero::create_with_attribute(7, "ºÚÜ½", "ÉäÊÖ", 500, 100, 200, 50, 100, 2, "Fulina.png");
+	HeroLibrary[7] = Hero::create_with_attribute(7, "ºÚÜ½", "ÉäÊÖ", 500, 100, 200, 50, 100, 2, "Furina.png");
 	HeroLibrary[8] = Hero::create_with_attribute(8, "ÐÄº£", "Ò½ÁÆ", 1500, 60, 150, 50, 70, 2, "Kokomi.png");
 	HeroLibrary[9] = Hero::create_with_attribute(9, "°×Ü½", "Ò½ÁÆ", 1000, 60, 100, 50, 70, 1, "Fulina.png");
 	
@@ -228,12 +228,13 @@ void HeroHandler::SetSlotState(bool state)
 	{
 		ButtonImgList.at(1)->setEnabled(false);
 		ButtonTextList.at(1)->setColor(GrayTextColor);
+		SlotId = -1;
 	}
 }
 
 void HeroHandler::initBoard()
 {
-	for (int row = 0; row < BoardRow; row++)
+	for (int row = 0; row < FullRow; row++)
 	{
 		for (int col = 0; col < BoardCol; col++)
 		{
@@ -377,6 +378,8 @@ void HeroHandler::SetBoardState(bool state, bool SelectEmpty)
 		ButtonTextList.at(0)->setColor(GrayTextColor);
 		ButtonImgList.at(2)->setEnabled(false);
 		ButtonTextList.at(2)->setColor(GrayTextColor);
+		SelectRow = -1;
+		SelectCol = -1;
 	}
 	for (Vector<MenuItem*>::iterator it = BoardBgList.begin(); it < BoardBgList.end(); it++)
 	{
@@ -406,12 +409,18 @@ void HeroHandler::HeroToBoard()
 	ButtonTextList.at(1)->setColor(GrayTextColor);
 	ButtonImgList.at(2)->setEnabled(false);
 	ButtonTextList.at(2)->setColor(GrayTextColor);
+	if (gscene->sv != nullptr)
+	{
+		gscene->sv->SendMsg(1, Inventory.at(SlotId)->getID(), SelectRow, SelectCol);
+	}
 	Board[SelectRow][SelectCol] = Inventory.at(SlotId);
 	Inventory.at(SlotId)->move_to_board(SelectRow, SelectCol);
 	Inventory.at(SlotId)->setPosition(GetBoardPos(SelectRow, SelectCol)
 	- Vec2(0, Inventory.at(SlotId)->BarHeight));
 	Inventory.erase(SlotId);
 	SlotId = -1;
+	SelectRow = -1;
+	SelectCol = -1;
 	DisplayInventory();
 	SetBoardState(true, false);
 }

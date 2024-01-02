@@ -22,21 +22,30 @@ void myHero::absoluteMove(float x, float y)
 	runAction(seq);
 }
 
-// 一次移动动作
+// 一次战斗行动
 void myHero::moveAction(float dt) {
 	static float num = 0;  //记录时间
 	if (!get_condition())  //我方死亡
 	{
-		if (Camp == 1)
-			scene_pointer->me->HeroesOnBoard.eraseObject(this);
-		else
-			scene_pointer->enemy->HeroesOnBoard.eraseObject(this);
 		unschedule(CC_SCHEDULE_SELECTOR(myHero::moveAction));
-		scene_pointer->hh->Board[hero_x][hero_y] = nullptr;
-		scene_pointer->removeChild(this);
+		dead();
+		scheduleOnce(CC_SCHEDULE_SELECTOR(myHero::remove), 1.0f);
+		//if (Camp == 1)
+		//	scene_pointer->me->HeroesOnBoard.eraseObject(this);
+		//else
+		//	scene_pointer->enemy->HeroesOnBoard.eraseObject(this);
+
+		//scene_pointer->hh->Board[hero_x][hero_y] = nullptr;
+		//scene_pointer->removeChild(this);
 		return;
 	}
-	if (Type == "医疗" && (target_hero == nullptr || !target_hero->get_condition() || 
+	if (Type != "医疗" && target_hero == nullptr)  //找不到敌方目标
+	{
+		unschedule(CC_SCHEDULE_SELECTOR(myHero::moveAction));
+		//scheduleOnce(CC_SCHEDULE_SELECTOR(myHero::no_hero_left), 1.1f);
+		return;
+	}
+	if (Type == "医疗" && (target_hero == nullptr || !target_hero->get_condition() ||
 		target_hero->HP == HPmax))  //当前治疗角色已满血或未搜索到掉血目标
 	{
 		change_target(findHurtTarget(player));
@@ -73,11 +82,6 @@ void myHero::moveAction(float dt) {
 				num += moveInterval;
 		}
 	}
-	if (Type != "医疗" && target_hero == nullptr)  //找不到敌方目标
-	{
-		scene_pointer->sc->NextStage();
-		return;
-	}
 }
 
 //角色一轮锁定移动+攻击
@@ -85,20 +89,38 @@ void myHero::hero_action() {
 	schedule(CC_SCHEDULE_SELECTOR(myHero::moveAction), moveInterval);
 }
 
-myHero* myHero::findHurtTarget(Player* player) {
-	myHero* target = nullptr;
-	Vector<myHero*> heroesList = player->HeroesOnBoard;
-	float minDis = 10000000.0f, dis;
-	float myPosX = this->getPositionX(), myPosY = this->getPositionY();
-	for (vector<myHero*> ::iterator i = heroesList.begin(); i != heroesList.end(); ++i) {
-		if ((*i)->HP == (*i)->HPmax) continue;
-		int tPosX = (*i)->getPositionX();
-		int tPosY = (*i)->getPositionY();
-		dis = (myPosX - tPosX) * (myPosX - tPosX) + (myPosY - tPosY) * (myPosY - tPosY);
-		if (dis < minDis) {
-			target = *i;
-			minDis = dis;
+void Player::JudgeStageEnd(float dt)
+{
+	bool HasMyHero = false;
+	bool HasEnemyHero = false;
+	for (int row = 0; !HasMyHero && row < gscene->hh->BoardRow; row++)
+	{
+		for (int col = 0; !HasMyHero && col < gscene->hh->BoardCol; col++)
+		{
+			if (gscene->hh->Board[row][col] != nullptr && gscene->hh->Board[row][col]->get_condition())
+			{
+				HasMyHero = true;
+			}
 		}
 	}
-	return target;
+	for (int row = gscene->hh->BoardRow; !HasEnemyHero && row < gscene->hh->FullRow; row++)
+	{
+		for (int col = 0; !HasEnemyHero && col < gscene->hh->BoardCol; col++)
+		{
+			if (gscene->hh->Board[row][col] != nullptr && gscene->hh->Board[row][col]->get_condition())
+			{
+				HasEnemyHero = true;
+			}
+		}
+	}
+	if (!(HasMyHero && HasEnemyHero) && gscene->sc->getCurTime() > 1)
+	{
+		unschedule(CC_SCHEDULE_SELECTOR(Player::JudgeStageEnd));
+		scheduleOnce(CC_SCHEDULE_SELECTOR(Player::StageEnd), 1.5f);
+	}
+}
+
+void Player::StageEnd(float dt)
+{
+	gscene->sc->NextStage();
 }

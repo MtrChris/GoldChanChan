@@ -11,6 +11,7 @@ Scene* ModeSelectScene::createScene()
 
 bool ModeSelectScene::init()
 {
+	TEST_INIT
 	if (!Scene::init())
 	{
 		return false;
@@ -47,6 +48,8 @@ bool ModeSelectScene::init()
 	this->addChild(MultiPlayerText, 1);
 	this->addChild(BackText, 1);
 	this->addChild(menu, 0);
+
+	CATCH_INIT
 	return true;
 }
 
@@ -57,7 +60,16 @@ void ModeSelectScene::SingleStartCallback(Ref* pSender)
 
 void ModeSelectScene::MultiPlayerStartCallback(Ref* pSender)
 {
-	Director::getInstance()->end();
+	try
+	{
+		throw std::exception("在写了在写了");
+	}
+	catch (std::exception& exp)
+	{
+		this->removeAllChildren();
+		this->addChild(ErrorScene::CreateWithException(exp), 10);
+	}
+
 }
 
 void ModeSelectScene::BackButtonCallback(Ref* pSender)

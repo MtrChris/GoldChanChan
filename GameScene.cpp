@@ -6,13 +6,26 @@
 
 USING_NS_CC;
 
-Scene* GameScene::CreateScene()
+Scene* GameScene::CreateScene(bool multi)
 {
-	return GameScene::create();
+	GameScene* ret = GameScene::create();
+	if (multi)
+	{
+		ret->sv = Sever::create();
+		ret->addChild(ret->sv);
+		ret->initSever();
+	}
+	else
+	{
+		ret->sv = nullptr;
+		ret->enemy->AIAction();
+	}
+	return ret;
 }
 
 bool GameScene::init()
 {
+	TEST_INIT
 	if (!Scene::init())
 	{
 		return false;
@@ -30,9 +43,10 @@ bool GameScene::init()
 	enemy = Player::NormalCreate(this, "AI", "Player.png", PlayerHP);
 	isQuitBoxOpen = false;
 	SetButtonState(true); // 开启所有按钮的功能
-	enemy->AIAction();
-	//DisplayResult(false);
-	
+	//enemy->AIAction();
+
+	CATCH_INIT
+
 	return true;
 }
 
@@ -99,50 +113,50 @@ void GameScene::initGraph()
 	Menu* menu = Menu::createWithArray(menuitems);
 	menu->setPosition(Vec2::ZERO);
 	this->addChild(menu);
-	
 }
 
 void GameScene::ExitButtonCallback(Ref* pSender)
 {
-	// 弹出确认对话框
-	Sprite* QuitBox = Sprite::create("QuitBox.png");
-	if (QuitBox == nullptr)
-	{
-		throw LoadFailure("QuitBox.png", "picture");
-	}
-	ResizePic(QuitBox, QuitBoxSize.width, QuitBoxSize.height);
 	Size visibleSize = Director::getInstance()->getVisibleSize();
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 	float CenterX = origin.x + visibleSize.width / 2;
 	float CenterY = origin.y + visibleSize.height / 2;
-	QuitBox->setPosition(Vec2(CenterX, CenterY));
+	// 弹出确认对话框
+	Sprite* QuitBox = CreateSprite(this, Vec2(CenterX, CenterY), QuitBoxSize, "QuitBox.png", 5);
 	QuitBox->setName("QuitBox");
 
 	// 创建确认和取消按钮
-	Label* QuitMessage = CreateLabel("确定退出当前对局？", "宋体", Vec2(CenterX, CenterY + 50), QuitMessageSize, ButtonTextColor);
+	Label* QuitMessage = CreateLabel("确定退出当前对局？", "宋体", Vec2(CenterX, CenterY + QuitMessageY), 
+		QuitMessageSize, ButtonTextColor);
 	QuitMessage->setName("QuitMessage");
-	float buttonX = CenterX - QuitBox->getContentSize().width / 2 + QuitButtonSize.width;
-	float buttonY = CenterY - QuitBox->getContentSize().height / 2 + QuitButtonSize.height * 2;
+	float buttonX = CenterX - QuitBoxSize.width / 2 + QuitButtonSize.width;
+	float buttonY = CenterY - QuitBoxSize.height / 2 + QuitButtonSize.height;
 	MenuItemImage* CancelImage = CreateButton(Vec2(buttonX, buttonY), QuitButtonSize);
 	Label* CancelText = CreateLabel("取消", "宋体", Vec2(buttonX, buttonY), QuitTextSize, ButtonTextColor);
 	CancelText->setName("CancelButton");
-	buttonX = CenterX + QuitBox->getContentSize().width / 2 - QuitButtonSize.width;
+	CancelImage->setCallback(CC_CALLBACK_1(GameScene::QuitCancelCallback, this));
+
+	buttonX = CenterX + QuitBoxSize.width / 2 - QuitButtonSize.width;
 	MenuItemImage* ConfirmImage = CreateButton(Vec2(buttonX, buttonY), QuitButtonSize);
 	Label* ConfirmText = CreateLabel("确定", "宋体", Vec2(buttonX, buttonY), QuitTextSize, ButtonTextColor);
 	ConfirmText->setName("ConfirmButton");
-	CancelImage->setCallback(CC_CALLBACK_1(GameScene::QuitCancelCallback, this));
 	ConfirmImage->setCallback([&](Ref* pSender) {
 		Director::getInstance()->replaceScene(MainMenu::createScene());
 		});
 
-	Menu* menu = Menu::create(CancelImage, ConfirmImage, NULL);
+	MenuItemImage* RetryImage = CreateButton(Vec2(CenterX, buttonY), QuitButtonSize);
+	Label* RetryText = CreateLabel("重试", "宋体", Vec2(CenterX, buttonY), QuitTextSize, ButtonTextColor);
+	RetryText->setName("RetryButton");
+	RetryImage->setCallback(CC_CALLBACK_1(GameScene::RetryCallback, this));
+
+	Menu* menu = Menu::create(CancelImage, ConfirmImage, RetryImage, NULL);
 	menu->setPosition(Vec2::ZERO);
 	menu->setName("QuitMenu");
-	this->addChild(menu, 3);
-	this->addChild(CancelText, 3);
-	this->addChild(ConfirmText, 3);
-	this->addChild(QuitBox, 2);
-	this->addChild(QuitMessage, 3);
+	this->addChild(menu, 6);
+	this->addChild(CancelText, 6);
+	this->addChild(ConfirmText, 6);
+	this->addChild(RetryText, 6);
+	this->addChild(QuitMessage, 6);
 	SetButtonState(false); // 屏蔽游戏内按钮的功能
 	isQuitBoxOpen = true;
 	hh->CheckButtonState();
@@ -155,6 +169,7 @@ void GameScene::QuitCancelCallback(Ref* pSender)
 	this->removeChildByName("QuitMessage");
 	this->removeChildByName("CancelButton");
 	this->removeChildByName("ConfirmButton");
+	this->removeChildByName("RetryButton");
 	SetButtonState(true); // 恢复游戏内按钮的功能
 	isQuitBoxOpen = false;
 	hh->CheckButtonState();
@@ -253,10 +268,51 @@ void GameScene::DisplayResult(bool state)
 
 void GameScene::RetryCallback(Ref* pSender)
 {
-	Director::getInstance()->replaceScene(GameScene::create());
+	Director::getInstance()->replaceScene(GameScene::CreateScene(sv != nullptr));
 }
 
 void GameScene::MainMenuCallback(Ref* pSender)
 {
 	Director::getInstance()->replaceScene(MainMenu::create());
+}
+
+void GameScene::initSever()
+{
+	SetButtonState(false);
+	schedule(CC_SCHEDULE_SELECTOR(GameScene::SeverConnect));
+}
+
+void GameScene::SeverConnect(float dt)
+{
+	if (sv->connect())
+	{
+		unschedule(CC_SCHEDULE_SELECTOR(GameScene::SeverConnect));
+		SetButtonState(true);
+		schedule(CC_SCHEDULE_SELECTOR(GameScene::SeverMsgRead));
+	}
+}
+
+void GameScene::SeverMsgRead(float dt)
+{
+	int op, id, row, col;
+	if (sv->GetMsg(op, id, row, col))
+	{
+		if (op == 1)
+		{
+			myHero* newHero = myHero::create_with_hero(hh->HeroLibrary[id], ENEMY, this);
+			enemy->HeroesOnBoard.pushBack(newHero);
+			addChild(newHero, 0);
+			hh->Board[row][col] = newHero;
+			newHero->move_to_board(row, col);
+			newHero->setPosition(hh->GetBoardPos(row, col)
+				- Vec2(0, newHero->BarHeight));
+		}
+		else if(op == 2)
+		{
+			hh->Board[row][col]->remove_from_board();
+			enemy->HeroesOnBoard.eraseObject(hh->Board[row][col]);
+			hh->Board[row][col]->erase_hero();
+			hh->Board[row][col] = nullptr;
+		}
+	}
 }

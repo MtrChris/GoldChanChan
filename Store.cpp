@@ -17,15 +17,17 @@ bool Store::init()
 
 void Store::initWithScene(GameScene* m_gscene)
 {
+	TEST_INIT
 	gscene = m_gscene;
 	ItemList = new Hero * [HeroBatch];
 	ShuffleItem();
-	gscene->addChild(this, 1);
+	gscene->addChild(this, 5);
 	StoreOpen = false;
 	CurCoin = StartCoin;
 	CoinDisplay();
 	SelectId = -1;
 	NextRefresh = true;
+	CATCH_INIT
 }
 
 void Store::ShuffleItem()
@@ -80,7 +82,7 @@ void Store::initMenu()
 	Vector<MenuItem*> ButtonImage;
 	// 1. 角色详情按钮
 	DetailNode = Node::create();
-	this->addChild(DetailNode, 3);
+	this->addChild(DetailNode, 5);
 	StoreElem.pushBack(DetailNode);
 	Vec2 ButtonPos = origin + Vec2(ItemPosLeft.x + ButtonSize.width / 2,
 		visibleSize.height - ItemPosLeft.y - ItemBgSize.height - ButtonDy - ButtonSize.height / 2);
@@ -131,6 +133,10 @@ void Store::initMenu()
 	Label* LockText = CreateLabel("锁定", ButtonTextFont, ButtonPos, ButtonTextSize, ButtonTextColor);
 	ButtonImage.pushBack(LockButton);
 	this->addChild(LockText, 3);
+	if (!NextRefresh)
+	{
+		LockButton->selected();
+	}
 	StoreElem.pushBack(LockText);
 	LockButton->setCallback([this, LockButton](Ref* pSender) {
 		NextRefresh = !NextRefresh;
@@ -142,7 +148,7 @@ void Store::initMenu()
 		{
 			LockButton->selected();
 		}
-		});
+	});
 
 	Menu* ButtonMenu = Menu::createWithArray(ButtonImage);
 	ButtonMenu->setPosition(Vec2::ZERO);
@@ -263,6 +269,7 @@ void Store::PurchaseItem()
 
 void Store::UpdateDisplay()
 {
+	TEST_INIT
 	auto visibleSize = Director::getInstance()->getVisibleSize();
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
@@ -323,6 +330,7 @@ void Store::UpdateDisplay()
 		ItemPosX += ItemBgSize.width;
 		ItemBgMenu->addChild(ItemBg);
 	}
+	CATCH_INIT
 }
 
 void Store::ToggleDetail(bool mode)

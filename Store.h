@@ -61,7 +61,7 @@ public:
 	const float ButtonTextSize = 10; // 按钮文本的大小
 	const cocos2d::Color3B ButtonTextColor = cocos2d::Color3B::BLACK; // 按钮文本的颜色
 	const cocos2d::Color3B GrayText = cocos2d::Color3B::GRAY;         // 灰度文本的颜色
-	const int StartCoin = 50; // 初始金币
+	const int StartCoin = 20; // 初始金币
 	const int RefreshPrice = 2; // 刷新所需金币
 	const char* InfoTextFont = "宋体"; // 角色信息的字体
 	const float InfoTextSize = 8;

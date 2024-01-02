@@ -10,6 +10,8 @@ class myHero;
 
 class HeroHandler : public cocos2d::Node
 {
+	friend class GameScene;
+	friend class StageController;
 	friend class Player;
 	friend class myHero;
 public:
